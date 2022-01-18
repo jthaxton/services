@@ -1,44 +1,30 @@
+# syntax=docker/dockerfile:1
 
-# Start from golang base image
-FROM golang:alpine as builder
+FROM golang:1.16-alpine
 
-# Enable go modules
-ENV GO111MODULE=on
-
-# Install git. (alpine image does not have git in it)
-RUN apk update && apk add --no-cache git
-
-# Set current working directory
 WORKDIR /app
 
-# Note here: To avoid downloading dependencies every time we
-# build image. Here, we are caching all the dependencies by
-# first copying go.mod and go.sum files and downloading them,
-# to be used every time we build the image if the dependencies
-# are not changed.
+# ### get migrate
+# RUN curl -L https://packagecloud.io/golang-migrate/migrate/gpgkey | apt-key add -
+# RUN echo "deb https://packagecloud.io/golang-migrate/migrate/ubuntu/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/migrate.list
+# RUN apt-get update
+# RUN apt-get install -y migrate
+# ###
 
-# Copy go mod and sum files
-# COPY go.mod ./
-# COPY go.sum ./
+COPY . ./
+RUN go mod download
+RUN go install
+RUN file="$(ls)" && echo $file
+RUN echo $(ls)
+RUN apk update
+RUN apk add make
+# RUN apk add golang-migrate
+# RUN make migrateup
 
-# Download all dependencies.
-# RUN go mod download
 
-# Now, copy the source code
-COPY . .
+RUN go build -o /docker-gs-ping
 
-# Note here: CGO_ENABLED is disabled for cross system compilation
-# It is also a common best practise.
 
-# Build the application.
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/main .
+EXPOSE 8080
 
-# Finally our multi-stage to build a small image
-# Start a new stage from scratch
-FROM scratch
-
-# Copy the Pre-built binary file
-COPY --from=builder /app/bin/main .
-
-# Run executable
-CMD ["./main"]
+CMD [ "/docker-gs-ping" ]

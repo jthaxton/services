@@ -2,9 +2,8 @@
 version: '3'
 
 services:
-
   app:
-    container_name: events_api
+    container_name: api
     build: .
     ports:
       - 8080:8080
@@ -12,8 +11,8 @@ services:
     environment:
       PORT: 8080
       DB_CONN: "postgres://user:password@db:5432/db?sslmode=disable"
-      # GO111MODULE: on
-      PATH: $PATH:$GOPATH/bin
+      GO111MODULE: "off"
+      # PATH: $PATH:$GOPATH/bin
       GOROOT: /usr/local/go
     volumes:
       - .:/app
@@ -21,15 +20,42 @@ services:
       - db
     links:
       - db
+    networks:
+      - default
 
   db:
+    volumes:
+      - data:/var/lib/postgresql/data
     image: postgres
-    container_name: events_db
+    container_name: db
+    restart: always
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: "user"
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "db"
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+      POSTGRES_AUTH_METHOD: trust
       TZ: 'UTC'
       PGTZ: 'UTC'
+    # networks:
+    #   new:
+    #     aliases:
+    #       - database
+
+  # migrate:
+  #   image: migrate/migrate
+  #   networks:
+  #       - new
+  #   volumes:
+  #       - ./app/dblocal/migration
+  #   # command: "ls -a"
+  #   command: "-source=./app/dblocal/migration -verbose postgres://root:password@db:5432/db?sslmode=disable up"
+  #   links: 
+  #       - db
+  #   depends_on:
+  #     - db
+volumes:
+  data:
+    # aliases:
+    #   - database

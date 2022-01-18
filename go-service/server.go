@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"handlers"
 	"github.com/gorilla/mux"
+	"main/handlers"
+	// "io/ioutil"
 	// "github.com/smahjoub/events-api/handlers"
 	// "github.com/smahjoub/events-api/store"
 )
@@ -19,16 +20,13 @@ type Args struct {
 	port string
 }
 
-// Run run the server based on given args
 func Run(args Args) error {
 	// router
 	router := mux.NewRouter().
 		PathPrefix("/api/v1/"). // add prefix for v1 api `/api/v1/`
 		Subrouter()
 
-	// st := store.NewPostgresEventStore(args.conn)
-	hnd := handlers.NewEventHandler(st)
-	RegisterAllRoutes(router, hnd)
+	RegisterAllRoutes(router)
 
 	// start server
 	log.Println("Starting server at port: ", args.port)
@@ -36,7 +34,7 @@ func Run(args Args) error {
 }
 
 // RegisterAllRoutes registers all routes of the api
-func RegisterAllRoutes(router *mux.Router, hnd handlers.IEventHandler) {
+func RegisterAllRoutes(router *mux.Router) {
 
 	// set content type
 	router.Use(func(next http.Handler) http.Handler {
@@ -45,23 +43,10 @@ func RegisterAllRoutes(router *mux.Router, hnd handlers.IEventHandler) {
 			next.ServeHTTP(w, r)
 		})
 	})
-
-	// get events
-	// router.HandleFunc("/event", hnd.Get).Methods(http.MethodGet)
-
-	router.HandleFunc("/test", hnd.GetOther).Methods(http.MethodGet)
-	// // create events
-	// router.HandleFunc("/event", hnd.Create).Methods(http.MethodPost)
-	// // delete event
-	// router.HandleFunc("/event", hnd.Delete).Methods(http.MethodDelete)
-
-	// // cancel event
-	// router.HandleFunc("/event/cancel", hnd.Cancel).Methods(http.MethodPatch)
-	// // update event details
-	// router.HandleFunc("/event/details", hnd.UpdateDetails).Methods(http.MethodPut)
-	// // reschedule event
-	// router.HandleFunc("/event/reschedule", hnd.Reschedule).Methods(http.MethodPatch)
-
-	// // list events
-	// router.HandleFunc("/events", hnd.List).Methods(http.MethodGet)
+	
+	router.HandleFunc("/test", handlers.GetOther).Methods(http.MethodGet)
+	router.HandleFunc("/users/get", handlers.GetUser).Methods(http.MethodGet)
+	router.HandleFunc("/users/create", handlers.CreateUser).Methods(http.MethodGet)
+	
 }
+
